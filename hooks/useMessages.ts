@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { fetchMessages, supabase } from "@/lib/supabaseClient";
+import { markRoomAsSeen } from "@/lib/supabaseClient";
+
 
 interface UseMessagesProps {
   onNewMessage?: () => void;
 }
 
-export function useMessages(roomId: string | null | undefined) {
+export function useMessages(roomId: string | null | undefined, userId: string | null | undefined) {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,6 +45,10 @@ export function useMessages(roomId: string | null | undefined) {
           
           if (data) {
             setMessages(prev => [...prev, data]);
+
+            if (roomId && userId) {
+                markRoomAsSeen(roomId, userId);
+              }
           }
         }
       )
@@ -52,7 +58,7 @@ export function useMessages(roomId: string | null | undefined) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [roomId]);
+  }, [roomId, userId]);
 
   const refetch = () => {
     if (roomId) {

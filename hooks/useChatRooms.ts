@@ -23,5 +23,5 @@ export function useChatRooms(userId: string | null | undefined) {
     refetch();
   }, [refetch]);
 
-  return { rooms, loading, refetch };
+  return { rooms, loading, refetch, setRooms };
 }
