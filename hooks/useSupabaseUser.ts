@@ -33,4 +33,3 @@ export function useSupabaseUser() {
 
   return { user, loading };
 }
-

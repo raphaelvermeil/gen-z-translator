@@ -95,93 +95,148 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f3f4f6", color: "black" }}>
-      <form onSubmit={isLogin ? handleLogin : handleSignUp} style={{ background: "white", padding: 32, borderRadius: 8, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", minWidth: 320 }}>
-        <h2 style={{ marginBottom: 24, textAlign: "center" }}>{isLogin ? "Login" : "Sign Up"}</h2>
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="email" style={{ display: "block", marginBottom: 4 }}>Email</label>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-purple-50 flex items-center justify-center p-4">
+      {/* Background decorative elements */}
+      <div className="absolute top-0 right-0 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+      
+      <form 
+        onSubmit={isLogin ? handleLogin : handleSignUp} 
+        className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-8 space-y-6"
+      >
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="text-4xl mb-3">💬</div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Translator
+          </h1>
+          <h2 className="text-xl font-semibold text-slate-700">
+            {isLogin ? "Welcome Back" : "Create Account"}
+          </h2>
+          <p className="text-sm text-slate-500">
+            {isLogin 
+              ? "Sign in to continue chatting" 
+              : "Join the conversation today"}
+          </p>
+        </div>
+
+        {/* Email Input */}
+        <div className="space-y-2">
+          <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
+            Email Address
+          </label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
-            style={{ width: "100%", padding: 8, borderRadius: 4, border: "1px solid #ccc" }}
+            placeholder="your@email.com"
+            className="input-focus w-full px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
             required
           />
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label htmlFor="password" style={{ display: "block", marginBottom: 4 }}>Password</label>
+
+        {/* Password Input */}
+        <div className="space-y-2">
+          <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
+            Password
+          </label>
           <input
             id="password"
             type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            style={{ width: "100%", padding: 8, borderRadius: 4, border: "1px solid #ccc" }}
+            placeholder="••••••••"
+            className="input-focus w-full px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
             required
           />
         </div>
+
+        {/* Confirm Password (Sign Up only) */}
         {!isLogin && (
-          
-          <div style={{ marginBottom: 16 }}>
-            <label htmlFor="confirmPassword" style={{ display: "block", marginBottom: 4 }}>Confirm Password</label>
+          <div className="space-y-2 scaleIn">
+            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-slate-700">
+              Confirm Password
+            </label>
             <input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
-              style={{ width: "100%", padding: 8, borderRadius: 4, border: "1px solid #ccc" }}
+              placeholder="••••••••"
+              className="input-focus w-full px-4 py-3 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
               required
             />
           </div>
-          
-          
         )}
+
+        {/* Persona Selection (Sign Up only) */}
         {!isLogin && (
-          
-          <div style={{ marginBottom: 16 }}>
-    <label htmlFor="persona" style={{ display: "block", marginBottom: 4 }}>Select Boomer or Gen-Z</label>
-    <select
-      id="persona"
-      value={persona}
-      onChange={e => setPersona(e.target.value)}
-      style={{
-        width: "100%",
-        padding: 8,
-        borderRadius: 4,
-        border: "1px solid #2563eb",
-        background: "#f3f4f6",
-        color: "#2563eb",
-        fontWeight: 500
-      }}
-      required
-    >
-      <option value="gen-z">Gen-Z</option>
-      <option value="boomer">Boomer</option>
-    </select>
-  </div>
-          
-          
+          <div className="space-y-2 scaleIn">
+            <label htmlFor="persona" className="block text-sm font-semibold text-slate-700">
+              Select Your Persona
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {['gen-z', 'boomer'].map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setPersona(option)}
+                  className={`button-hover px-4 py-3 rounded-lg font-semibold text-sm transition-all border-2 ${
+                    persona === option
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-600 shadow-lg'
+                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:border-blue-400'
+                  }`}
+                >
+                  {option === 'gen-z' ? '🎮 Gen-Z' : '👴 Boomer'}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
-        {error && <div style={{ color: "red", marginBottom: 16 }}>{error}</div>}
-        <button type="submit" style={{ width: "100%", padding: 10, borderRadius: 4, background: "#2563eb", color: "white", border: "none", fontWeight: 600 }}>
-          {isLogin ? "Login" : "Sign Up"}
+
+        {/* Error Message */}
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-300 rounded-lg text-red-700 text-sm font-medium">
+            {error}
+          </div>
+        )}
+
+        {/* Submit Button */}
+        <button 
+          type="submit" 
+          className="button-hover w-full py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transition-all"
+        >
+          {isLogin ? "Sign In" : "Create Account"}
         </button>
-        <div style={{ marginTop: 16, textAlign: "center" }}>
-          {isLogin ? (
-            <span>
-              Don't have an account?{' '}
-              <button type="button" style={{ color: "#2563eb", background: "none", border: "none", textDecoration: "underline", cursor: "pointer" }} onClick={() => { setIsLogin(false); setError(""); }}>
-                Sign up
-              </button>
-            </span>
-          ) : (
-            <span>
-              Already have an account?{' '}
-              <button type="button" style={{ color: "#2563eb", background: "none", border: "none", textDecoration: "underline", cursor: "pointer" }} onClick={() => { setIsLogin(true); setError(""); }}>
-                Login
-              </button>
-            </span>
-          )}
+
+        {/* Toggle Auth Mode */}
+        <div className="pt-2 text-center space-y-2">
+          <p className="text-sm text-slate-600">
+            {isLogin ? (
+              <>
+                Don't have an account?{' '}
+                <button 
+                  type="button" 
+                  onClick={() => { setIsLogin(false); setError(""); }}
+                  className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                >
+                  Sign up
+                </button>
+              </>
+            ) : (
+              <>
+                Already have an account?{' '}
+                <button 
+                  type="button" 
+                  onClick={() => { setIsLogin(true); setError(""); }}
+                  className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                >
+                  Login
+                </button>
+              </>
+            )}
+          </p>
         </div>
       </form>
     </div>
