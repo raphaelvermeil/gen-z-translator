@@ -75,10 +75,27 @@ export default function LoginPage() {
         )}
         {!isLogin && (
           
-          <select value={persona} onChange={e => setPersona(e.target.value)}>
-            <option value="gen-z">Gen-Z</option>
-            <option value="boomer">Boomer</option>
-          </select>
+          <div style={{ marginBottom: 16 }}>
+    <label htmlFor="persona" style={{ display: "block", marginBottom: 4 }}>Select Boomer or Gen-Z</label>
+    <select
+      id="persona"
+      value={persona}
+      onChange={e => setPersona(e.target.value)}
+      style={{
+        width: "100%",
+        padding: 8,
+        borderRadius: 4,
+        border: "1px solid #2563eb",
+        background: "#f3f4f6",
+        color: "#2563eb",
+        fontWeight: 500
+      }}
+      required
+    >
+      <option value="gen-z">Gen-Z</option>
+      <option value="boomer">Boomer</option>
+    </select>
+  </div>
           
           
         )}
