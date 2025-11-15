@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useChatRooms } from '@/hooks/useChatRooms';
 import { useSupabaseUser } from '@/hooks/useSupabaseUser';
-import { fetchAllUsers, createChatRoom, supabase } from '@/lib/supabaseClient';
+
+import { fetchAllUsers, createChatRoom, supabase, markRoomAsSeen } from '@/lib/supabaseClient';
 
 interface ChatRoomListProps {
   onSelect: (roomId: string) => void;
@@ -10,7 +11,7 @@ interface ChatRoomListProps {
 
 export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps) {
   const { user } = useSupabaseUser();
-  const { rooms, loading, refetch } = useChatRooms(user?.id);
+  const { rooms, loading, refetch, setRooms } = useChatRooms(user?.id);
   const [showNewChat, setShowNewChat] = useState(false);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -41,11 +42,17 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
           table: 'messages',
         },
         (payload) => {
-          console.log('New message detected, refetching rooms...', payload);
-          // Small delay to ensure the message is fully committed
-          setTimeout(() => {
-            refetch();
-          }, 100);
+            if (payload.new.room_id !== selectedId) {
+                console.log('New message for a *different* room. Refetching.', payload);
+                // Small delay to ensure the message is fully committed
+                setTimeout(() => {
+                  refetch();
+                }, 100);
+              } else {
+                // New message for the *current* room.
+                // DO NOT refetch. The useMessages hook is handling it.
+                console.log('New message for current room. Ignoring refetch.', payload);
+              }
         }
       )
       .subscribe();
@@ -53,13 +60,42 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, refetch]);
+  }, [user?.id, refetch, selectedId]);
 
   const handleCreateRoom = async (otherUserId: string) => {
     if (!user) return;
     await createChatRoom(user.id, otherUserId);
     setShowNewChat(false);
     refetch();
+  };
+
+  const handleRoomSelect = (room: any) => {
+    if (user?.id) {
+      // Call the DB update in the background (fire-and-forget)
+      markRoomAsSeen(room.id, user.id);
+
+      // Update the local state *immediately*
+      setRooms(prevRooms => 
+        prevRooms.map(r => {
+          if (r.id === room.id) {
+            // Find out which profile key to update
+            const myProfileKey = user.id === r.profile_1.id 
+              ? 'profile_1_last_seen_at' 
+              : 'profile_2_last_seen_at';
+            
+            // Return a new room object with the updated timestamp
+            return {
+              ...r,
+              [myProfileKey]: new Date().toISOString()
+            };
+          }
+          return r; // Return all other rooms unchanged
+        })
+      );
+    }
+    
+    // Tell the parent page to select the room
+    onSelect(room.id);
   };
   
   return (
@@ -115,27 +151,40 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
         </div>
       )}
 
-      {/* Rooms list */}
-      <div className="flex-1 overflow-y-auto">
+     <div className="flex-1 overflow-y-auto">
         <div className="p-3 space-y-2">
-          {loading ? (
-            <div className="text-center text-slate-600 py-8">Loading conversations...</div>
-          ) : rooms.length === 0 ? (
-            <div className="text-center text-slate-600 py-12">
+        {loading ? (
+          <div className="text-center text-slate-600 py-8">Loading conversations...</div>
+        ) : rooms.length === 0 ? (
+          <div className="text-center text-slate-600 py-12">
               <div className="text-3xl mb-2">🔍</div>
               <p className="text-sm">No conversations yet</p>
             </div>
-          ) : (
-            rooms.map((room: any) => (
-              <div
+        ) : (
+          rooms.map((room: any) => {
+            
+            const myLastSeen = (user?.id === room.profile_1.id)
+            ? room.profile_1_last_seen_at
+            : room.profile_2_last_seen_at;
+          
+          const hasNewMessage = new Date(room.latest_message_time) > new Date(myLastSeen || 0);
+
+            return (
+            <div
                 key={room.id}
-                onClick={() => onSelect(room.id)}
+                onClick={() => handleRoomSelect(room)} // *** USE NEW HANDLER ***
                 className={`room-item-hover p-4 rounded-xl cursor-pointer transition-all border-2 ${
                   selectedId === room.id
                     ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-400 shadow-md'
                     : 'bg-white border-slate-200 hover:border-slate-300'
                 }`}
               >
+                {/* --- UNREAD MARKER --- */}
+                {hasNewMessage && selectedId !== room.id && (
+                  <div className="absolute top-3 right-3 w-3 h-3 bg-blue-500 rounded-full" />
+                )}
+                {/* --------------------- */}
+
                 <div className="font-semibold text-slate-900">
                   {room.profile_1.username} & {room.profile_2.username}
                 </div>
@@ -143,9 +192,9 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
                   {room.profile_1.persona_type} • {room.profile_2.persona_type}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ export default function DiscussionsPage() {
   const router = useRouter();
   const { user, loading } = useSupabaseUser();
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const { messages, loading: loadingMessages } = useMessages(selectedRoom);
+  const { messages, loading: loadingMessages } = useMessages(selectedRoom, user?.id);
   const [input, setInput] = useState('');
 
   const handleLogout = async () => {
