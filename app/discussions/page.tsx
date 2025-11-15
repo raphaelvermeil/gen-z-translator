@@ -12,7 +12,7 @@ export default function DiscussionsPage() {
   const router = useRouter();
   const { user, loading } = useSupabaseUser();
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
-  const { messages, loading: loadingMessages, refetch } = useMessages(selectedRoom);
+  const { messages, loading: loadingMessages } = useMessages(selectedRoom);
   const [input, setInput] = useState('');
 
   const handleLogout = async () => {
@@ -31,7 +31,7 @@ export default function DiscussionsPage() {
     
     await sendMessage(selectedRoom, input, user.id);
     setInput('');
-    refetch();
+    // No need to refetch - real-time subscription will handle it
   };
 
   return (

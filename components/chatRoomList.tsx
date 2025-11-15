@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useChatRooms } from '@/hooks/useChatRooms';
 import { useSupabaseUser } from '@/hooks/useSupabaseUser';
-import { fetchAllUsers, createChatRoom } from '@/lib/supabaseClient';
+import { fetchAllUsers, createChatRoom, supabase } from '@/lib/supabaseClient';
 
 interface ChatRoomListProps {
   onSelect: (roomId: string) => void;
@@ -10,7 +10,7 @@ interface ChatRoomListProps {
 
 export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps) {
   const { user } = useSupabaseUser();
-  const { rooms, loading } = useChatRooms(user?.id);
+  const { rooms, loading, refetch } = useChatRooms(user?.id);
   const [showNewChat, setShowNewChat] = useState(false);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -27,11 +27,39 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
     }
   }, [showNewChat, user]);
 
+  // Listen to all message inserts to update room order
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('all-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        },
+        (payload) => {
+          console.log('New message detected, refetching rooms...', payload);
+          // Small delay to ensure the message is fully committed
+          setTimeout(() => {
+            refetch();
+          }, 100);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, refetch]);
+
   const handleCreateRoom = async (otherUserId: string) => {
     if (!user) return;
     await createChatRoom(user.id, otherUserId);
     setShowNewChat(false);
-    window.location.reload();
+    refetch();
   };
   
   return (
