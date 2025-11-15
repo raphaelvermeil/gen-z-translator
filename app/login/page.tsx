@@ -1,10 +1,11 @@
 "use client";
 
-
-  import { useState } from "react";
-  import { supabase } from "@/lib/supabaseClient";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,6 +54,10 @@ export default function LoginPage() {
 
       alert("Your account has been created successfully.");
       
+      // Wait a bit for auth state to propagate, then redirect
+      setTimeout(() => {
+        router.push('/discussions');
+      }, 100);
       
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -66,16 +71,19 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
       });
       if (error) throw error;
       
-      // If login is successful, redirect to the chat page
-      // (You'll need to set up routing for this)
-      alert('Logged in!');
-      // router.push('/dashboard'); 
+      console.log('Login successful, session:', data.session);
+      console.log('User after login:', data.user);
+      
+      // Wait a bit for auth state to propagate, then redirect
+      setTimeout(() => {
+        router.push('/discussions');
+      }, 100);
   
     } catch (error: unknown) {
       if (error instanceof Error) {
