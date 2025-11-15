@@ -173,7 +173,7 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
             <div
                 key={room.id}
                 onClick={() => handleRoomSelect(room)} // *** USE NEW HANDLER ***
-                className={`room-item-hover p-4 rounded-xl cursor-pointer transition-all border-2 ${
+                className={`relative room-item-hover p-4 rounded-xl cursor-pointer transition-all border-2 ${
                   selectedId === room.id
                     ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-400 shadow-md'
                     : 'bg-white border-slate-200 hover:border-slate-300'
@@ -196,6 +196,7 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
           })
         )}
       </div>
+    </div>
     </div>
   );
 }
