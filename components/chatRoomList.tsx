@@ -63,22 +63,26 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
   };
   
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-black">Chat Rooms</h2>
-        <button
-          onClick={() => setShowNewChat(!showNewChat)}
-          className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-        >
-          {showNewChat ? 'Cancel' : '+ New'}
-        </button>
+    <div className="h-full flex flex-col bg-white">
+      {/* Header */}
+      <div className="p-5 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100">
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold text-slate-900">Conversations</h2>
+          <button
+            onClick={() => setShowNewChat(!showNewChat)}
+            className="button-hover px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-sm font-semibold shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700"
+          >
+            {showNewChat ? '✕ Cancel' : '+ New'}
+          </button>
+        </div>
       </div>
 
+      {/* New chat section */}
       {showNewChat && (
-        <div className="mb-4 p-3 bg-gray-100 rounded">
-          <h3 className="text-sm font-medium mb-2 text-black">Select a user:</h3>
+        <div className="px-5 py-4 border-b border-slate-200 bg-blue-50">
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Select a user:</h3>
           {loadingUsers ? (
-            <div className="text-sm text-gray-600">Loading...</div>
+            <div className="text-sm text-slate-600 py-4 text-center">Loading users...</div>
           ) : (() => {
               const availableUsers = allUsers.filter((u: any) => 
                 !rooms.some((r: any) => 
@@ -87,16 +91,21 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
               );
               
               return availableUsers.length === 0 ? (
-                <div className="text-sm text-gray-600">No available users</div>
+                <div className="text-sm text-slate-600 py-4 text-center">No available users</div>
               ) : (
-                <div className="space-y-1 max-h-60 overflow-y-auto">
+                <div className="space-y-2 max-h-64 overflow-y-auto">
                   {availableUsers.map((u: any) => (
                     <div
                       key={u.id}
                       onClick={() => handleCreateRoom(u.id)}
-                      className="p-2 bg-white rounded cursor-pointer hover:bg-blue-50 text-black text-sm"
+                      className="room-item-hover p-3 bg-white rounded-lg cursor-pointer border border-slate-200 hover:border-blue-300 hover:bg-blue-50 text-slate-900 text-sm font-medium"
                     >
-                      {u.username} ({u.persona_type})
+                      <div className="flex items-center justify-between">
+                        <span>{u.username}</span>
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                          {u.persona_type}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -106,24 +115,37 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
         </div>
       )}
 
-      <div className="space-y-2">
-        {loading ? (
-          <div className="text-center text-black">Loading...</div>
-        ) : rooms.length === 0 ? (
-          <div className="text-center text-black">No rooms found</div>
-        ) : (
-          rooms.map((room: any) => (
-            <div
-              key={room.id}
-              onClick={() => onSelect(room.id)}
-              className={`p-4 border rounded cursor-pointer text-black ${
-                selectedId === room.id ? 'bg-blue-100' : 'bg-white'
-              }`}
-            >
-              {room.profile_1.username} & {room.profile_2.username}
+      {/* Rooms list */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-3 space-y-2">
+          {loading ? (
+            <div className="text-center text-slate-600 py-8">Loading conversations...</div>
+          ) : rooms.length === 0 ? (
+            <div className="text-center text-slate-600 py-12">
+              <div className="text-3xl mb-2">🔍</div>
+              <p className="text-sm">No conversations yet</p>
             </div>
-          ))
-        )}
+          ) : (
+            rooms.map((room: any) => (
+              <div
+                key={room.id}
+                onClick={() => onSelect(room.id)}
+                className={`room-item-hover p-4 rounded-xl cursor-pointer transition-all border-2 ${
+                  selectedId === room.id
+                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-blue-400 shadow-md'
+                    : 'bg-white border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="font-semibold text-slate-900">
+                  {room.profile_1.username} & {room.profile_2.username}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">
+                  {room.profile_1.persona_type} • {room.profile_2.persona_type}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
