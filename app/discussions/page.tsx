@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState,useRef, useEffect } from 'react';
 import ChatRoomList from '@/components/chatRoomList';
 import { supabase, sendMessage } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,12 @@ export default function DiscussionsPage() {
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const { messages, loading: loadingMessages } = useMessages(selectedRoom, user?.id);
   const [input, setInput] = useState('');
-
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -71,7 +76,7 @@ export default function DiscussionsPage() {
 
         {/* Messages */}
         <div className="flex-1 flex flex-col bg-slate-50">
-          <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col justify-end">
+          <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col">
             {!selectedRoom ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
@@ -140,6 +145,7 @@ export default function DiscussionsPage() {
                     </div>
                   );
                 })}
+                <div ref={messagesEndRef} />
               </div>
             )}
           </div>
