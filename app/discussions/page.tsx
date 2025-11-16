@@ -78,7 +78,7 @@ export default function DiscussionsPage() {
           </div>
           <button
             onClick={handleLogout}
-            className="button-hover flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-red-600 hover:to-red-700"
+            className="button-hover flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-red-600 hover:to-red-700 active:from-red-700 active:to-red-800"
           >
             <LogOut size={18} />
             Logout
@@ -190,7 +190,7 @@ export default function DiscussionsPage() {
                 />
                 <button
                   onClick={handleSend}
-                  className="button-hover px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full font-semibold shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="button-hover px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full font-semibold shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!input.trim()}
                 >
                   Send
