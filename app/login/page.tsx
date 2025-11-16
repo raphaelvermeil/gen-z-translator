@@ -184,8 +184,8 @@ export default function LoginPage() {
                   onClick={() => setPersona(option)}
                   className={`button-hover px-4 py-3 rounded-lg font-semibold text-sm transition-all border-2 ${
                     persona === option
-                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-600 shadow-lg'
-                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:border-blue-400'
+                      ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-600 shadow-lg active:from-blue-700 active:to-blue-800'
+                      : 'bg-slate-100 text-slate-700 border-slate-300 hover:border-blue-400 active:bg-slate-200'
                   }`}
                 >
                   {option === 'gen-z' ? '🎮 Gen-Z' : '👴 Boomer'}
@@ -205,7 +205,7 @@ export default function LoginPage() {
         {/* Submit Button */}
         <button 
           type="submit" 
-          className="button-hover w-full py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transition-all"
+          className="button-hover w-full py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 transition-all"
         >
           {isLogin ? "Sign In" : "Create Account"}
         </button>
