@@ -2,19 +2,38 @@
 
 import { useState,useRef, useEffect } from 'react';
 import ChatRoomList from '@/components/chatRoomList';
-import { supabase, sendMessage } from '@/lib/supabaseClient';
+import { supabase, sendMessage, getProfile } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { useSupabaseUser } from '@/hooks/useSupabaseUser';
 import { useMessages } from '@/hooks/useMessages';
 import { LogOut } from 'lucide-react';
+import { get } from 'http';
+
+type Profile = {
+  id?: string;
+  username?: string;
+  persona_type?: string;
+  created_at?: string;
+};
 
 export default function DiscussionsPage() {
   const router = useRouter();
   const { user, loading } = useSupabaseUser();
+  const [currentProfile, setCurrentProfile] = useState<Profile[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const { messages, loading: loadingMessages } = useMessages(selectedRoom, user?.id);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (user?.id) {
+        const profile = await getProfile(user.id);
+        setCurrentProfile(profile || []);
+      }
+    };
+    fetchProfile();
+  }, [user?.id]);
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -51,7 +70,7 @@ export default function DiscussionsPage() {
         <div className="container mx-auto px-4 py-5 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Discussions
+              Discussions with {currentProfile[0]?.persona_type == 'gen-z' ? 'Boomers':'Gen Zs' }
             </h1>
             <p className="text-sm text-slate-500 mt-1" suppressHydrationWarning>
               {loading ? 'Loading...' : user?.email || 'Guest'}
