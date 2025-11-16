@@ -13,7 +13,7 @@
  * This prevents malicious users from translating arbitrary text at your expense.
  */
 
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
@@ -25,56 +25,94 @@ import { kv } from '@vercel/kv';
 // This bypasses Row Level Security (RLS) policies
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Initialize Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize OpenAI API
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // SECURITY: Rate limiting - Allow 10 translation requests per 30 seconds per user
-const ratelimit = new Ratelimit({
+// TEMPORARY: Disabled for testing - enable after setting up Vercel KV
+const ratelimit = process.env.KV_REST_API_URL ? new Ratelimit({
   redis: kv,
   limiter: Ratelimit.slidingWindow(10, '30 s'),
-});
+}) : null;
 
 export async function POST(request) {
   try {
     // SECURITY STEP 1: Authentication - Verify user is logged in
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          },
-        },
-      }
-    );
+    // Check Authorization header first (more reliable than cookies)
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    
+    let user = null;
+    let authError = null;
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (token) {
+      // Verify token using admin client
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+      user = data.user;
+      authError = error;
+    } else {
+      // Fallback to cookie-based auth
+      const cookieStore = await cookies();
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll();
+            },
+            setAll(cookiesToSet) {
+              try {
+                cookiesToSet.forEach(({ name, value, options }) =>
+                  cookieStore.set(name, value, options)
+                );
+              } catch (error) {
+                // Cookies can't be set in API routes, that's okay
+              }
+            },
+          },
+        }
+      );
+
+      const { data, error } = await supabase.auth.getUser();
+      user = data.user;
+      authError = error;
+    }
+
+    // Debug logging - remove after testing
+    console.log('Auth check:', { 
+      hasUser: !!user, 
+      userId: user?.id,
+      authMethod: token ? 'header' : 'cookie',
+      authError: authError?.message
+    });
 
     if (authError || !user) {
+      console.error('Authentication failed:', authError);
       return NextResponse.json(
-        { error: 'Unauthorized - You must be logged in' },
+        { 
+          error: 'Unauthorized - You must be logged in', 
+          details: authError?.message
+        },
         { status: 401 }
       );
     }
 
     // SECURITY STEP 2: Rate Limiting - Prevent spam/abuse
-    const { success: rateLimitOk } = await ratelimit.limit(user.id);
+    if (ratelimit) {
+      const { success: rateLimitOk } = await ratelimit.limit(user.id);
 
-    if (!rateLimitOk) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please wait before translating more messages.' },
-        { status: 429 }
-      );
+      if (!rateLimitOk) {
+        return NextResponse.json(
+          { error: 'Too many requests. Please wait before translating more messages.' },
+          { status: 429 }
+        );
+      }
     }
 
     // SECURITY STEP 3: Don't Trust Client - Only accept messageId
@@ -177,30 +215,35 @@ export async function POST(request) {
       });
     }
 
-    // Translate using Gemini 2.0 Flash
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-    const prompt = `You are a language translator specializing in generational slang and communication styles.
-
-Sender Persona: ${senderPersona}
-Target Persona: ${targetPersona}
-Original Message: "${message.original_text}"
-
-Task: Translate the message from ${senderPersona} slang and communication style to ${targetPersona} slang and communication style.
+    // Define the system prompt for ChatGPT
+    const systemPrompt = `You are a language translator specializing in generational slang and communication styles. Your task is to translate a message from a sender's persona to a target's persona.
 
 Guidelines:
-- Gen Z slang includes terms like: "no cap", "bussin", "fr", "lowkey", "highkey", "slaps", "hits different", "vibe check", "bet", "fire", "lit", "slay", "stan", "tea", "salty", "flex", "sus", "simp", "ghosting", "fam", "squad", "goat", "receipts", "shade", "clout", "mood", "periodt", "rent-free", "main character energy", "understood the assignment", "it's giving", "serve", "ate and left no crumbs"
-- Boomer communication is more formal, uses complete sentences, includes more context, and avoids modern internet slang
-- Keep the core meaning and intent of the message
-- Make it sound natural for the target persona
-- Don't add extra information, just translate the style
-- If the message is already neutral or doesn't need much translation, keep it mostly the same but adjust the tone appropriately
+- Gen Z slang includes terms like: "no cap", "bussin", "fr", "lowkey", "highkey", "slaps", "hits different", "vibe check", "bet", "fire", "lit", "slay", "stan", "tea", "salty", "flex", "sus", "simp", "ghosting", "fam", "squad", "goat", "receipts", "shade", "clout", "mood", "periodt", "rent-free", "main character energy", "understood the assignment", "it's giving", "serve", "ate and left no crumbs", "cooked", "sigma", "ligma".
+- Gen Z slang also contains acronyms such as: "wdym", "lmao", "frl", "brb", "idk", "tbh", "ttyl", "lol", "rofl", "wtf", "wth".
+- Boomer communication is more formal, joyful and uses complete sentences, includes more context, and avoids modern internet slang.
+- Keep the core meaning and intent of the message, including emotional and humorous tones.
+- Try to change emoji usage to be more appropriate for the target persona. For example, the skull emoji means something funny in Gen Z slang, but not in Boomer slang.  
+- Make it sound natural for the target persona, implying a good traduction towards the gen z slang too.
+- Don't add extra information, just translate the style.
+- If the message is already neutral or doesn't need much translation, keep it mostly the same but adjust the tone appropriately.
+- Provide ONLY the translated message, no explanation or additional text.`;
+    
+    // Define the user prompt
+    const userPrompt = `Translate the following message from ${senderPersona} to ${targetPersona}:\n\n"${message.original_text}"`;
 
-Provide ONLY the translated message, no explanation or additional text.`;
+    // The NEW syntax for OpenAI
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // Use the fast and cost-effective model
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 150,
+    });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const translatedText = response.text().trim();
+    const translatedText = response.choices[0].message.content.trim();
 
     // Update the message in Supabase with the translation
     // Using admin client to bypass RLS

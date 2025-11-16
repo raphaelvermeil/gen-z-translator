@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Gen Z Translator
 
-A real-time messaging app that automatically translates messages between Gen Z and Boomer communication styles using Google's Gemini AI.
+A real-time messaging app that automatically translates messages between Gen Z and Boomer communication styles using OpenAI's ChatGPT.
 
 ## Environment Setup
 
@@ -20,9 +20,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 # Find this in: Supabase Dashboard > Project Settings > API > service_role key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
 
-# Google Gemini API Configuration
-# Get your API key from: https://makersuite.google.com/app/apikey
-GEMINI_API_KEY=your_gemini_api_key_here
+# OpenAI (ChatGPT) API Configuration
+# Get your API key from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=your_openai_api_key_here
 
 # Vercel KV (for rate limiting)
 # These are automatically set when you add KV storage in Vercel Dashboard
@@ -95,7 +95,7 @@ The app follows a fast, non-blocking flow for instant message delivery with back
    - `targetPersona`: The recipient's persona (gen-z or boomer)
 
 5. The serverless API route:
-   - Uses Gemini 2.0 Flash to translate between communication styles
+   - Uses OpenAI's gpt-3.5-turbo to translate between communication styles
    - Uses Supabase admin client (with service role key) to securely update the message
    - Bypasses Row Level Security (RLS) for reliable server-side updates
 
@@ -113,7 +113,7 @@ The app follows a fast, non-blocking flow for instant message delivery with back
 
 - 🔄 **Automatic Translation**: Messages are automatically translated when sent
 - 👥 **Persona-Based**: Translates between Gen Z and Boomer communication styles
-- 🤖 **AI-Powered**: Uses Google's Gemini 2.0 Flash for natural translations
+- 🤖 **AI-Powered**: Uses OpenAI's gpt-3.5-turbo for natural translations
 - ⚡ **Real-Time**: Built with Supabase real-time subscriptions
 - 💬 **Chat Rooms**: Direct messaging between users with different personas
 - 🔒 **Secure**: Multi-layer security with authentication, authorization, and rate limiting
