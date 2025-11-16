@@ -29,9 +29,14 @@ export default function DiscussionsPage() {
   const handleSend = async () => {
     if (!input.trim() || !selectedRoom || !user) return;
     
+    // Part A: Send message immediately - appears instantly in chat
+    // SECURITY: Only sending room ID, text, and user ID
+    // The API securely fetches all other data from the database
     await sendMessage(selectedRoom, input, user.id);
+    
     setInput('');
-    // No need to refetch - real-time subscription will handle it
+    // Part B happens automatically in sendMessage - translation will appear 1-2 seconds later
+    // Real-time subscription will update the UI when translation is ready
   };
 
   return (
@@ -110,7 +115,7 @@ export default function DiscussionsPage() {
                           </div>
                         )}
                         <div className="text-sm leading-relaxed">{msg.original_text}</div>
-                        {msg.translated_text && msg.translated_text !== msg.original_text && (
+                        {msg.translated_text && msg.translated_text !== msg.original_text ? (
                           <div
                             className={`mt-2 pt-2 border-t ${
                               isCurrentUser
@@ -120,7 +125,17 @@ export default function DiscussionsPage() {
                           >
                             {msg.translated_text}
                           </div>
-                        )}
+                        ) : !msg.translated_text ? (
+                          <div
+                            className={`mt-2 pt-2 border-t ${
+                              isCurrentUser
+                                ? 'border-blue-400 text-blue-100'
+                                : 'border-slate-200 text-slate-500'
+                            } text-xs italic`}
+                          >
+                            <span className="animate-pulse">Translating...</span>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   );
