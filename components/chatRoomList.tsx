@@ -97,6 +97,10 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
     // Tell the parent page to select the room
     onSelect(room.id);
   };
+  const getOtherUser = (room: any) => {
+    if (!user) return null;
+    return room.profile_1.id === user.id ? room.profile_2 : room.profile_1;
+  }
   
   return (
     <div className="h-full flex flex-col bg-white">
@@ -153,7 +157,7 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
 
      <div className="flex-1 overflow-y-auto">
         <div className="p-3 space-y-2">
-        {loading ? (
+        {loading  && rooms.length===0? (
           <div className="text-center text-slate-600 py-8">Loading conversations...</div>
         ) : rooms.length === 0 ? (
           <div className="text-center text-slate-600 py-12">
@@ -161,7 +165,7 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
               <p className="text-sm">No conversations yet</p>
             </div>
         ) : (
-          rooms.map((room: any) => {
+          rooms.map((room) => {
             
             const myLastSeen = (user?.id === room.profile_1.id)
             ? room.profile_1_last_seen_at
@@ -186,10 +190,7 @@ export default function ChatRoomList({ onSelect, selectedId }: ChatRoomListProps
                 {/* --------------------- */}
 
                 <div className="font-semibold text-slate-900">
-                  {room.profile_1.username} & {room.profile_2.username}
-                </div>
-                <div className="text-xs text-slate-500 mt-1">
-                  {room.profile_1.persona_type} • {room.profile_2.persona_type}
+                  {getOtherUser(room)?.username}
                 </div>
               </div>
             );
