@@ -102,6 +102,7 @@ export default function DiscussionsPage() {
               <div className="space-y-4 flex flex-col">
                 {messages.map((msg: any) => {
                   const isCurrentUser = msg.sender.id === user?.id;
+                  const hasTranslated = msg.translated_text && msg.translated_text !== msg.original_text;
                   return (
                     <div
                       key={msg.id}
@@ -119,28 +120,35 @@ export default function DiscussionsPage() {
                             {msg.sender.username}
                           </div>
                         )}
-                        <div className="text-sm leading-relaxed">{msg.original_text}</div>
-                        {msg.translated_text && msg.translated_text !== msg.original_text ? (
-                          <div
-                            className={`mt-2 pt-2 border-t ${
-                              isCurrentUser
-                                ? 'border-blue-400 text-blue-100'
-                                : 'border-slate-200 text-slate-600'
-                            } text-xs italic`}
-                          >
-                            {msg.translated_text}
-                          </div>
-                        ) : !msg.translated_text ? (
-                          <div
-                            className={`mt-2 pt-2 border-t ${
-                              isCurrentUser
-                                ? 'border-blue-400 text-blue-100'
-                                : 'border-slate-200 text-slate-500'
-                            } text-xs italic`}
-                          >
-                            <span className="animate-pulse">Translating...</span>
-                          </div>
-                        ) : null}
+                        {hasTranslated ? (
+                          <>
+                            <div className="text-sm leading-relaxed">{msg.translated_text}</div>
+                            <div
+                              className={`mt-2 pt-2 border-t ${
+                                isCurrentUser
+                                  ? 'border-blue-400 text-blue-100'
+                                  : 'border-slate-200 text-slate-500'
+                              } text-xs italic`}
+                            >
+                              original: {msg.original_text}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-sm leading-relaxed">{msg.original_text}</div>
+                            {!msg.translated_text && (
+                              <div
+                                className={`mt-2 pt-2 border-t ${
+                                  isCurrentUser
+                                    ? 'border-blue-400 text-blue-100'
+                                    : 'border-slate-200 text-slate-500'
+                                } text-xs italic`}
+                              >
+                                <span className="animate-pulse">Translating...</span>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   );
